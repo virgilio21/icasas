@@ -2,10 +2,8 @@ from selenium import webdriver
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import time
-import csv
+import pandas as pd
 
 all_departments = []
 
@@ -27,7 +25,7 @@ def search_departments( location ):
   search_field.click()
   time.sleep(2)
   search_field.send_keys(location)
-  time.sleep(3)
+  time.sleep(4)
   first_option_wanted = driver.find_element(By.CLASS_NAME, 'tt-dropdown-menu')
   first_option_wanted.click()
   search_button = driver.find_element(By.ID, 'submitForm')
@@ -53,6 +51,26 @@ def get_departments( driver_navegator):
   list_departmetns = bs.find_all('li',{'class':'ad'})
   return list_departmetns
 
+def create_dataframe( departments ):
+  frame = {
+    'price': [],
+    'title': [],
+    'bathrooms':[],
+    'bethrooms':[],
+    'area':[],
+    'description': [],
+    'url':[]
+  }
+  for department in departments:
+    frame['price'].append(department.price)
+    frame['title'].append(department.title) 
+    frame['bathrooms'].append(department.bathrooms)
+    frame['bethrooms'].append(department.bethrooms)
+    frame['area'].append(department.area)
+    frame['description'].append(department.description)
+    frame['url'].append(department.url)
+
+  return frame
 
 if __name__ == "__main__":
   options = webdriver.ChromeOptions()
@@ -64,8 +82,9 @@ if __name__ == "__main__":
   search_departments('Ciudad de mexico')
   time.sleep(6)
 
-  print("Empezando obtencion de datos\n")
+  print("Empezando la obtencion de datos\n")
   is_live = True
+
   while is_live:
     bs_departments = get_departments(driver)
     for department in bs_departments:
@@ -88,6 +107,10 @@ if __name__ == "__main__":
     except:
       is_live = False
   
-  print_departments( all_departments )
+  data = create_dataframe(all_departments)
+  df = pd.DataFrame(data, columns = ['price', 'title', 'bathrooms', 'bethrooms', 'area', 'description', 'url'])
+  df.to_excel('departments.xlsx', sheet_name='departments')
+
+  
   print("\nobtencion de datos terminada")
   driver.close()
